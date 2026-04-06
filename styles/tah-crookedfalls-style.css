@@ -32,6 +32,7 @@
 #token-action-hud {
     align-items: center;
     border-radius: var(--tah-border-radius);
+    cursor: grab;
     display: flex;
     flex-direction: row;
     height: auto;
@@ -252,6 +253,7 @@
 #tah-groups,
 .tah-tab-groups {
     display: flex;
+    flex-direction: row;
     gap: var(--tah-gap);
     position: relative;
 }
