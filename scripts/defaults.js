@@ -15,16 +15,23 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
     DEFAULTS = {
         layout: [
             {
-                nestId: 'inventory',
-                id: 'inventory',
-                name: coreModule.api.Utils.i18n('Template.Inventory'),
+                nestId: 'actions',
+                id: 'actions',
+                name: coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.actions'),
                 groups: [
-                    { ...groups.weapons, nestId: 'inventory_weapons' },
-                    { ...groups.armor, nestId: 'inventory_armor' },
-                    { ...groups.equipment, nestId: 'inventory_equipment' },
-                    { ...groups.consumables, nestId: 'inventory_consumables' },
-                    { ...groups.containers, nestId: 'inventory_containers' },
-                    { ...groups.treasure, nestId: 'inventory_treasure' }
+                    { ...groups.pools,        nestId: 'actions_pools' },
+                    { ...groups.fogDefense,   nestId: 'actions_fogDefense' },
+                    { ...groups.powers,       nestId: 'actions_powers' },
+                    { ...groups.interference, nestId: 'actions_interference' }
+                ]
+            },
+            {
+                nestId: 'tags',
+                id: 'tags',
+                name: coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.tagsTab'),
+                groups: [
+                    { ...groups.tags,  nestId: 'tags_tags' },
+                    { ...groups.items, nestId: 'tags_items' }
                 ]
             },
             {
@@ -32,9 +39,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'utility',
                 name: coreModule.api.Utils.i18n('tokenActionHud.utility'),
                 groups: [
-                    { ...groups.combat, nestId: 'utility_combat' },
-                    { ...groups.token, nestId: 'utility_token' },
-                    { ...groups.rests, nestId: 'utility_rests' },
+                    { ...groups.combat,  nestId: 'utility_combat' },
+                    { ...groups.token,   nestId: 'utility_token' },
                     { ...groups.utility, nestId: 'utility_utility' }
                 ]
             }

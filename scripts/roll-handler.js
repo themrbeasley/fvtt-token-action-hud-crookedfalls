@@ -15,13 +15,14 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         async handleActionClick (event, encodedValue) {
             const [actionTypeId, actionId] = encodedValue.split('|')
 
-            const renderable = ['item']
+            // Right-clicking a tag opens its item sheet
+            const renderable = ['tag']
 
             if (renderable.includes(actionTypeId) && this.isRenderItem()) {
                 return this.doRenderItem(this.actor, actionId)
             }
 
-            const knownCharacters = ['character']
+            const knownCharacters = ['investigator', 'threat']
 
             // If single actor is selected
             if (this.actor) {
@@ -68,39 +69,100 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         async #handleAction (event, actor, token, actionTypeId, actionId) {
             switch (actionTypeId) {
-            case 'item':
-                this.#handleItemAction(event, actor, actionId)
+            case 'pool':
+                await this.#handlePoolAction(actor, actionId)
+                break
+            case 'fogDefense':
+                await this.#handleFogDefenseAction(actor)
+                break
+            case 'tag':
+                await this.#handleTagAction(event, actor, actionId)
+                break
+            case 'power':
+                await this.#handlePowerAction(actor, actionId)
+                break
+            case 'interference':
+                await this.#handleInterferenceAction(actor, actionId)
                 break
             case 'utility':
-                this.#handleUtilityAction(token, actionId)
+                await this.#handleUtilityAction(token, actor, actionId)
                 break
             }
         }
 
         /**
-         * Handle item action
+         * Handle pool roll action (intellect, agility, willpower)
+         * Delegates to the investigator sheet's roll dialog
+         * @private
+         * @param {object} actor   The actor
+         * @param {string} poolName The pool to roll (intellect | agility | willpower)
+         */
+        async #handlePoolAction (actor, poolName) {
+            await actor.sheet._rollPool(poolName)
+        }
+
+        /**
+         * Handle fog defense action
+         * Delegates to the investigator sheet's fog defense dialog
+         * @private
+         * @param {object} actor The actor
+         */
+        async #handleFogDefenseAction (actor) {
+            await actor.sheet._rollFogDefense()
+        }
+
+        /**
+         * Handle tag action (left-click posts to chat)
          * @private
          * @param {object} event    The event
          * @param {object} actor    The actor
-         * @param {string} actionId The action id
+         * @param {string} actionId The item id
          */
-        #handleItemAction (event, actor, actionId) {
+        async #handleTagAction (event, actor, actionId) {
             const item = actor.items.get(actionId)
-            item.toChat(event)
+            if (item) item.toChat(event)
+        }
+
+        /**
+         * Handle power action
+         * Delegates to the threat sheet's power activation/deactivation
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The item id
+         */
+        async #handlePowerAction (actor, actionId) {
+            const item = actor.items.get(actionId)
+            if (item) await actor.sheet._usePower(item)
+        }
+
+        /**
+         * Handle interference action
+         * Delegates to the threat sheet's interference flow
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The item id
+         */
+        async #handleInterferenceAction (actor, actionId) {
+            const item = actor.items.get(actionId)
+            if (item) await actor.sheet._useInterference(item)
         }
 
         /**
          * Handle utility action
          * @private
          * @param {object} token    The token
+         * @param {object} actor    The actor
          * @param {string} actionId The action id
          */
-        async #handleUtilityAction (token, actionId) {
+        async #handleUtilityAction (token, actor, actionId) {
             switch (actionId) {
             case 'endTurn':
                 if (game.combat?.current?.tokenId === token.id) {
                     await game.combat?.nextTurn()
                 }
+                break
+            case 'contestedPriority':
+                await game.crookedfalls.ContestedPriority.begin()
                 break
             }
         }

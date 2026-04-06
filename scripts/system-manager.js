@@ -30,7 +30,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @returns {object} The available roll handlers
          */
         getAvailableRollHandlers () {
-            const coreTitle = 'Core Template'
+            const coreTitle = 'Core Crooked Falls'
             const choices = { core: coreTitle }
             return choices
         }
@@ -80,11 +80,11 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         registerStyles () {
             return {
-                template: {
-                    class: 'tah-style-template-style', // The class to add to first DIV element
-                    file: 'tah-template-style', // The file without the css extension
+                crookedfalls: {
+                    class: 'tah-style-crookedfalls-style', // The class to add to first DIV element
+                    file: 'tah-crookedfalls-style', // The file without the css extension
                     moduleId: MODULE.ID, // The module ID
-                    name: 'Template Style' // The name to display in the Token Action HUD Core 'Style' module setting
+                    name: 'Crooked Falls Style' // The name to display in the Token Action HUD Core 'Style' module setting
                 }
             }
         }

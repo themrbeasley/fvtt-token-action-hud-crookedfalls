@@ -1,6 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ITEM_TYPE } from './constants.js'
-import { Utils } from './utils.js'
+import { ACTION_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -14,92 +13,239 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * Called by Token Action HUD Core
          * @override
          * @param {array} groupIds
-         */a
+         */
         async buildSystemActions (groupIds) {
-            // Set actor and token variables
             this.actors = (!this.actor) ? this._getActors() : [this.actor]
             this.actorType = this.actor?.type
 
-            // Settings
-            this.displayUnequipped = Utils.getSetting('displayUnequipped')
-
-            // Set items variable
-            if (this.actor) {
-                let items = this.actor.items
-                items = coreModule.api.Utils.sortItemsByName(items)
-                this.items = items
-            }
-
-            if (this.actorType === 'character') {
-                this.#buildCharacterActions()
+            if (this.actorType === 'investigator') {
+                await this.#buildInvestigatorActions()
+            } else if (this.actorType === 'threat') {
+                await this.#buildThreatActions()
             } else if (!this.actor) {
                 this.#buildMultipleTokenActions()
             }
+            // npc: no mechanical actions
         }
 
         /**
-         * Build character actions
+         * Build investigator actions (pool rolls, fog defense, tags)
          * @private
          */
-        #buildCharacterActions () {
-            this.#buildInventory()
+        async #buildInvestigatorActions () {
+            this.#buildPools()
+            this.#buildFogDefense()
+            this.#buildTags()
+            this.#buildCombat()
+        }
+
+        /**
+         * Build threat actions (powers and interference)
+         * @private
+         */
+        async #buildThreatActions () {
+            this.#buildPowers()
+            this.#buildInterference()
+            this.#buildCombat()
         }
 
         /**
          * Build multiple token actions
          * @private
-         * @returns {object}
          */
         #buildMultipleTokenActions () {
         }
 
         /**
-         * Build inventory
+         * Build pool roll actions (Intellect, Agility, Willpower)
          * @private
          */
-        async #buildInventory () {
-            if (this.items.size === 0) return
+        #buildPools () {
+            const actionTypeId = 'pool'
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+            const groupData = { id: 'pools', type: 'system' }
 
-            const actionTypeId = 'item'
-            const inventoryMap = new Map()
+            const pools = [
+                { id: 'intellect', name: coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.intellect') },
+                { id: 'agility',   name: coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.agility') },
+                { id: 'willpower', name: coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.willpower') }
+            ]
 
-            for (const [itemId, itemData] of this.items) {
-                const type = itemData.type
-                const equipped = itemData.equipped
+            const actions = pools.map(pool => ({
+                id: pool.id,
+                name: pool.name,
+                listName: `${actionTypeName ? `${actionTypeName}: ` : ''}${pool.name}`,
+                encodedValue: [actionTypeId, pool.id].join(this.delimiter)
+            }))
 
-                if (equipped || this.displayUnequipped) {
-                    const typeMap = inventoryMap.get(type) ?? new Map()
-                    typeMap.set(itemId, itemData)
-                    inventoryMap.set(type, typeMap)
-                }
-            }
+            this.addActions(actions, groupData)
+        }
 
-            for (const [type, typeMap] of inventoryMap) {
-                const groupId = ITEM_TYPE[type]?.groupId
+        /**
+         * Build fog defense action
+         * @private
+         */
+        #buildFogDefense () {
+            const actionTypeId = 'fogDefense'
+            const name = coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.fogDefense')
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+            const groupData = { id: 'fogDefense', type: 'system' }
 
-                if (!groupId) continue
+            const actions = [{
+                id: 'fogDefense',
+                name,
+                listName: `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`,
+                encodedValue: [actionTypeId, 'fogDefense'].join(this.delimiter)
+            }]
 
-                const groupData = { id: groupId, type: 'system' }
+            this.addActions(actions, groupData)
+        }
 
-                // Get actions
-                const actions = [...typeMap].map(([itemId, itemData]) => {
-                    const id = itemId
-                    const name = itemData.name
-                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
-                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
-                    const encodedValue = [actionTypeId, id].join(this.delimiter)
+        /**
+         * Build tag actions (narrative tags and item tags)
+         * @private
+         */
+        #buildTags () {
+            if (!this.actor) return
 
-                    return {
-                        id,
-                        name,
-                        listName,
-                        encodedValue
-                    }
-                })
+            const eligibleTags = this.actor.items.filter(i => {
+                if (i.type !== 'tag') return false
+                if (i.system.kind === 'wound') return false
+                if (i.name === 'Incapacitated') return false
+                if (i.system.kind === 'item' && i.system.uses_enabled && i.system.uses_value <= 0) return false
+                return true
+            })
 
-                // TAH Core method to add actions to the action list
+            const actionTypeId = 'tag'
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+
+            // Narrative tags → 'tags' group
+            const narrativeTags = eligibleTags
+                .filter(i => i.system.kind === 'tag')
+                .sort((a, b) => a.name.localeCompare(b.name))
+
+            if (narrativeTags.length > 0) {
+                const groupData = { id: 'tags', type: 'system' }
+                const actions = narrativeTags.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    listName: `${actionTypeName ? `${actionTypeName}: ` : ''}${item.name}`,
+                    encodedValue: [actionTypeId, item.id].join(this.delimiter)
+                }))
                 this.addActions(actions, groupData)
             }
+
+            // Item tags → 'items' group (show use count when tracked)
+            const itemTags = eligibleTags
+                .filter(i => i.system.kind === 'item')
+                .sort((a, b) => a.name.localeCompare(b.name))
+
+            if (itemTags.length > 0) {
+                const groupData = { id: 'items', type: 'system' }
+                const actions = itemTags.map(item => {
+                    const useSuffix = item.system.uses_enabled
+                        ? ` (${item.system.uses_value}/${item.system.uses_max})`
+                        : ''
+                    const name = `${item.name}${useSuffix}`
+                    return {
+                        id: item.id,
+                        name,
+                        listName: `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`,
+                        encodedValue: [actionTypeId, item.id].join(this.delimiter)
+                    }
+                })
+                this.addActions(actions, groupData)
+            }
+        }
+
+        /**
+         * Build power actions for threats
+         * @private
+         */
+        #buildPowers () {
+            if (!this.actor) return
+
+            const powers = this.actor.items
+                .filter(i => i.type === 'power')
+                .sort((a, b) => a.name.localeCompare(b.name))
+
+            if (powers.length === 0) return
+
+            const actionTypeId = 'power'
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+            const groupData = { id: 'powers', type: 'system' }
+
+            const actions = powers.map(item => {
+                const isActive = item.system.active ?? false
+                const name = isActive ? `[Active] ${item.name}` : item.name
+                return {
+                    id: item.id,
+                    name,
+                    listName: `${actionTypeName ? `${actionTypeName}: ` : ''}${item.name}`,
+                    encodedValue: [actionTypeId, item.id].join(this.delimiter)
+                }
+            })
+
+            this.addActions(actions, groupData)
+        }
+
+        /**
+         * Build interference actions for threats
+         * @private
+         */
+        #buildInterference () {
+            if (!this.actor) return
+
+            const interferences = this.actor.items
+                .filter(i => i.type === 'interference')
+                .sort((a, b) => a.name.localeCompare(b.name))
+
+            if (interferences.length === 0) return
+
+            const actionTypeId = 'interference'
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+            const groupData = { id: 'interference', type: 'system' }
+
+            const actions = interferences.map(item => ({
+                id: item.id,
+                name: item.name,
+                listName: `${actionTypeName ? `${actionTypeName}: ` : ''}${item.name}`,
+                encodedValue: [actionTypeId, item.id].join(this.delimiter)
+            }))
+
+            this.addActions(actions, groupData)
+        }
+
+        /**
+         * Build combat utility actions (End Turn, Contested Priority)
+         * @private
+         */
+        #buildCombat () {
+            const actionTypeId = 'utility'
+            const groupData = { id: 'combat', type: 'system' }
+            const actions = []
+
+            if (game.combat) {
+                const name = coreModule.api.Utils.i18n('tokenActionHud.endTurn')
+                actions.push({
+                    id: 'endTurn',
+                    name,
+                    listName: name,
+                    encodedValue: [actionTypeId, 'endTurn'].join(this.delimiter)
+                })
+            }
+
+            if (game.user.isGM && this.actorType === 'investigator') {
+                const name = coreModule.api.Utils.i18n('tokenActionHud.crookedfalls.contestedPriority')
+                actions.push({
+                    id: 'contestedPriority',
+                    name,
+                    listName: name,
+                    encodedValue: [actionTypeId, 'contestedPriority'].join(this.delimiter)
+                })
+            }
+
+            if (actions.length > 0) this.addActions(actions, groupData)
         }
     }
 })

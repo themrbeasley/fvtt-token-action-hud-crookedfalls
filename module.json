@@ -1,8 +1,12 @@
 {
-  "id": "token-action-hud-template",
-  "title": "Token Action HUD Template",
-  "description": "Token Action HUD is a repositionable HUD of actions for a selected token",
+  "id": "token-action-hud-crookedfalls",
+  "title": "Token Action HUD - Crooked Falls",
+  "description": "Token Action HUD is a repositionable HUD of actions for a selected token. This companion module adds support for the Crooked Falls system.",
   "authors": [
+    {
+      "name": "themrbeasley",
+      "discord": "gamemasterbeas"
+    },
     {
       "name": "Larkinabout",
       "url": "https://github.com/Larkinabout"
@@ -21,7 +25,7 @@
   "scripts": [
   ],
   "styles": [
-    "./styles/tah-template-style.css"
+    "./styles/tah-crookedfalls-style.css"
   ],
   "languages": [
     {
@@ -34,12 +38,12 @@
   "relationships": {
     "systems": [
       {
-        "id": "template",
+        "id": "crookedfalls",
         "type": "system",
         "compatibility": [
           {
             "minimum": "1.0.0",
-            "verified": "1.0.0"
+            "verified": "1.1.0"
           }
         ]
       }
@@ -65,7 +69,7 @@
   "socket": false,
   "manifest": "This is auto replaced",
   "download": "This is auto replaced",
-  "readme": "https://github.com/Larkinabout/fvtt-token-action-hud-template#readme",
+  "readme": "https://github.com/themrbeasley/fvtt-token-action-hud-crookedfalls#readme",
   "protected": false,
   "coreTranslation": false,
   "library": false
