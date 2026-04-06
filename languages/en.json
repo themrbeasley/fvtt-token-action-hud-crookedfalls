@@ -1,20 +1,21 @@
 {
   "tokenActionHud": {
-    "template": {
-      "armor": "Armor",
-      "containers": "Containers",
-      "consumables": "Consumables",
-      "equipment": "Equipment",
-      "inventory": "Inventory",
-      "item": "Item",
-      "weapons": "Weapons",
-      "treasure": "Treasure",
-      "settings": {
-        "displayUnequipped": {
-          "hint": "Choose whether to display unequipped items on the HUD",
-          "name": "Display Unequipped"
-        }
-      }
+    "crookedfalls": {
+      "actions": "Actions",
+      "tagsTab": "Tags",
+      "pool": "Roll",
+      "fogDefense": "Fog Defense",
+      "tag": "Tag",
+      "power": "Power",
+      "interference": "Interference",
+      "pools": "Pools",
+      "tags": "Tags",
+      "items": "Items",
+      "powers": "Powers",
+      "intellect": "Intellect",
+      "agility": "Agility",
+      "willpower": "Willpower",
+      "contestedPriority": "Contested Priority"
     }
   }
 }
