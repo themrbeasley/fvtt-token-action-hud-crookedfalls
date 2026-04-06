@@ -16,8 +16,8 @@
   "flags": {},
   "version": "This is auto replaced",
   "compatibility": {
-    "minimum": "11",
-    "verified": "11.313"
+    "minimum": "12",
+    "verified": "13.345"
   },
   "esmodules": [
     "./scripts/init.js"
@@ -54,9 +54,8 @@
         "type": "module",
         "compatibility": [
           {
-            "minimum": "1.5.0",
-            "maximum": "1.5",
-            "verified": "1.5.0"
+            "minimum": "2.0.0",
+            "verified": "2.0.16"
           }
         ]
       }
