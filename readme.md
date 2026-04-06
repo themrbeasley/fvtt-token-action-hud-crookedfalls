@@ -40,7 +40,7 @@ Token Action HUD is a repositionable HUD of actions for a selected token. This c
 ## Required Modules
 
 **IMPORTANT** - This module requires both:
-- The [Crooked Falls](https://github.com/themrbeasley/crookedfalls) game system
+- The [Crooked Falls](https://github.com/DJ-JackJack/crookedfalls) game system
 - The [Token Action HUD Core](https://foundryvtt.com/packages/token-action-hud-core) module (minimum version 1.5.0)
 
 ## Recommended Modules
